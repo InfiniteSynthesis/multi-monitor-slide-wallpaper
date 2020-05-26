@@ -2,20 +2,25 @@
 // @copyright: T.C.V.
 // @license: MIT
 // @birth: created by Infinite Synthesis on 2020 May 25
-// @version: V0.0.1
+// @version: V0.0.2
 
 #include <io.h>
 #include <shobjidl.h>
 #include <stdio.h>
 #include <windows.h>
 
+#include <algorithm>
+#include <codecvt>
+#include <locale>
 #include <string>
 #include <vector>
 
-#define FILE_FOLDER_PATH \
-  { YOUR_OWN_FOLDER_HERE }
-// e.g.{ "E:\\vertical\\", "E:\\horizontal\\" }
-#define TIME_INTERVAL (30 * 1000)  // replace interval
+#include "ctime"
+
+#define FILE_FOLDER_PATH YOUR_GALLERY_FOLDERS_HERE
+// e.g. { "E:\\vertical pixiv\\", "E:\\background\\" }
+#define TIME_INTERVAL (30 * 1000)
+#define MAX_FILE_COUNT 4000
 #define LOG(format, ...) wprintf(format L"\n", __VA_ARGS__)
 
 class CoUninitializeOnExit {
@@ -37,35 +42,38 @@ class ReleaseOnExit {
   IUnknown* m_p;
 };
 
-void getFiles(const std::string& path, std::vector<std::string>& files);
+void getTargetFile(const std::string& path,
+                   float rand,
+                   std::string& targetFilePath);
+bool IsImageByTail(const std::string& path);
 
 IDesktopWallpaper* pDesktopWallpaper;
-std::vector<std::string> picFolderPath;
-std::vector<std::vector<std::string>> picFiles;
+std::vector<std::string> picFolderPath = FILE_FOLDER_PATH;
+const char* GBK_LOCALE_NAME = ".936";
+std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> Conver_GBK(
+    new std::codecvt_byname<wchar_t, char, mbstate_t>(GBK_LOCALE_NAME));
 
 void CALLBACK _TimerProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime) {
   UINT monitor_count = 0;
+  std::string fullPath = "";
   LPWSTR monitorID = (LPWSTR)L"";
   LPCWSTR wallpaper = L"";
   pDesktopWallpaper->GetMonitorDevicePathCount(&monitor_count);
   for (size_t i = 0; i < min(monitor_count, picFolderPath.size()); ++i) {
-    std::string fullPath =
-        picFolderPath[i] + picFiles[i][rand() % (picFiles[i].size())];
-    std::wstring stemp = std::wstring(fullPath.begin(), fullPath.end());
+    getTargetFile(picFolderPath[i],
+                  (rand() % (MAX_FILE_COUNT + 1) / (float)(MAX_FILE_COUNT + 1)),
+                  fullPath);
+    std::wstring stemp = Conver_GBK.from_bytes(fullPath);
     wallpaper = stemp.c_str();
     pDesktopWallpaper->GetMonitorDevicePathAt((UINT)i, &monitorID);
     if (FAILED(pDesktopWallpaper->SetWallpaper(monitorID, wallpaper))) {
-      LOG(L"IDesktopWallpaper::SetWallpaper returned");
+      LOG(L"IDesktopWallpaper::SetWallpaper failed with %s", wallpaper);
     }
   }
 }
 
 int _cdecl main(int argc, LPCWSTR argv[]) {
-  picFolderPath = FILE_FOLDER_PATH;
-  picFiles.resize(picFolderPath.size());
-  for (size_t i = 0; i < picFolderPath.size(); ++i) {
-    getFiles(picFolderPath[i], picFiles[i]);
-  }
+  srand(time(NULL));
   HRESULT hr = CoInitialize(nullptr);
   if (FAILED(hr)) {
     LOG(L"CoInitialize returned 0x%08x", hr);
@@ -91,19 +99,56 @@ int _cdecl main(int argc, LPCWSTR argv[]) {
   return 0;
 }
 
-void getFiles(const std::string& path, std::vector<std::string>& files) {
-  long long hFile = 0;
-  struct _finddata_t fileinfo;
-  std::string p;
-  int i = 0;
-  if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) !=
-      -1) {
-    do {
-      if ((fileinfo.attrib & _A_SUBDIR)) {
-      } else {
-        files.push_back(p.assign(fileinfo.name));
+void getTargetFile(const std::string& path,
+                   float rand,
+                   std::string& targetFilePath) {
+  long long hFileCount = 0;   // fast to traverse the folder
+  long long hFileSelect = 0;  // slow to select the target wallpapaer file
+  struct _finddata_t fileinfoCount;
+  struct _finddata_t fileinfoSelect;
+  std::string p = path + "\\*";
+
+  unsigned int count = 0;
+  unsigned int select = 0;
+  if (((hFileCount = _findfirst(p.c_str(), &fileinfoCount)) != -1) &&
+      ((hFileSelect = _findfirst(p.c_str(), &fileinfoSelect)) != -1)) {
+    // select move to first image to prevent ../.
+    while (_findnext(hFileSelect, &fileinfoSelect) == 0) {
+      if (!(fileinfoSelect.attrib & _A_SUBDIR) &&
+          IsImageByTail(p.assign(fileinfoSelect.name))) {
+        break;
       }
-    } while (_findnext(hFile, &fileinfo) == 0);
-    _findclose(hFile);
+    }
+
+    // start traverse
+    do {
+      if (!(fileinfoCount.attrib & _A_SUBDIR) &&
+          IsImageByTail(p.assign(fileinfoCount.name))) {
+        count++;
+        if (unsigned(count * rand) > select) {
+          // find the next select target, break immediately
+          while (_findnext(hFileSelect, &fileinfoSelect) == 0) {
+            if (!(fileinfoSelect.attrib & _A_SUBDIR) &&
+                IsImageByTail(p.assign(fileinfoSelect.name))) {
+              break;
+            }
+          }
+          select++;
+        }
+      }
+    } while (_findnext(hFileCount, &fileinfoCount) == 0 &&
+             count < MAX_FILE_COUNT);
+    targetFilePath = p.assign(path).append(fileinfoSelect.name);
+    _findclose(hFileCount);
+    _findclose(hFileSelect);
   }
+}
+
+bool IsImageByTail(const std::string& path) {
+  std::string file_exten = path.substr(path.find_last_of('.') + 1);
+  transform(file_exten.begin(), file_exten.end(), file_exten.begin(),
+            ::tolower);
+
+  return (file_exten == "jpg" || file_exten == "tif" || file_exten == "png" ||
+          file_exten == "bmp" || file_exten == "gif" || file_exten == "jfif");
 }
