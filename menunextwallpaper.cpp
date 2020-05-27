@@ -1,8 +1,8 @@
-// @brief: multi-monitor slide-like wallpaper
+// @brief: menu next wallpaper
 // @copyright: T.C.V.
 // @license: MIT
-// @birth: created by Infinite Synthesis on 2020 May 25
-// @version: V0.0.2
+// @birth: created by Infinite Synthesis on 2020 May 26
+// @version: V0.0.1
 
 #include <io.h>
 #include <shobjidl.h>
@@ -19,7 +19,6 @@
 
 #define FILE_FOLDER_PATH YOUR_GALLERY_FOLDERS_HERE
 // e.g. { "E:\\vertical pixiv\\", "E:\\background\\" }
-#define TIME_INTERVAL (60 * 1000)
 #define MAX_FILE_COUNT 4000
 #define LOG(format, ...) wprintf(format L"\n", __VA_ARGS__)
 
@@ -53,27 +52,9 @@ const char* GBK_LOCALE_NAME = ".936";
 std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> Conver_GBK(
     new std::codecvt_byname<wchar_t, char, mbstate_t>(GBK_LOCALE_NAME));
 
-void CALLBACK _TimerProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime) {
-  UINT monitor_count = 0;
-  std::string fullPath = "";
-  LPWSTR monitorID = (LPWSTR)L"";
-  LPCWSTR wallpaper = L"";
-  pDesktopWallpaper->GetMonitorDevicePathCount(&monitor_count);
-  for (size_t i = 0; i < min(monitor_count, picFolderPath.size()); ++i) {
-    getTargetFile(picFolderPath[i],
-                  (rand() % (MAX_FILE_COUNT + 1) / (float)(MAX_FILE_COUNT + 1)),
-                  fullPath);
-    std::wstring stemp = Conver_GBK.from_bytes(fullPath);
-    wallpaper = stemp.c_str();
-    pDesktopWallpaper->GetMonitorDevicePathAt((UINT)i, &monitorID);
-    if (FAILED(pDesktopWallpaper->SetWallpaper(monitorID, wallpaper))) {
-      LOG(L"IDesktopWallpaper::SetWallpaper failed with %s", wallpaper);
-    }
-  }
-}
-
 int _cdecl main(int argc, LPCWSTR argv[]) {
   srand(time(NULL));
+  rand();
   HRESULT hr = CoInitialize(nullptr);
   if (FAILED(hr)) {
     LOG(L"CoInitialize returned 0x%08x", hr);
@@ -90,12 +71,22 @@ int _cdecl main(int argc, LPCWSTR argv[]) {
   }
   ReleaseOnExit releaseDesktopWallpaper(pDesktopWallpaper);
 
-  int iId = SetTimer(NULL, 0, TIME_INTERVAL, _TimerProc);
-  MSG msg;
-  while (GetMessage(&msg, NULL, 0, 0)) {
-    DispatchMessage(&msg);
+  UINT monitor_count = 0;
+  std::string fullPath = "";
+  LPWSTR monitorID = (LPWSTR)L"";
+  LPCWSTR wallpaper = L"";
+  pDesktopWallpaper->GetMonitorDevicePathCount(&monitor_count);
+  for (size_t i = 0; i < min(monitor_count, picFolderPath.size()); ++i) {
+    getTargetFile(picFolderPath[i],
+                  (rand() % (MAX_FILE_COUNT + 1) / (float)(MAX_FILE_COUNT + 1)),
+                  fullPath);
+    std::wstring stemp = Conver_GBK.from_bytes(fullPath);
+    wallpaper = stemp.c_str();
+    pDesktopWallpaper->GetMonitorDevicePathAt((UINT)i, &monitorID);
+    if (FAILED(pDesktopWallpaper->SetWallpaper(monitorID, wallpaper))) {
+      LOG(L"IDesktopWallpaper::SetWallpaper failed with %s", wallpaper);
+    }
   }
-  KillTimer(NULL, iId);
   return 0;
 }
 
