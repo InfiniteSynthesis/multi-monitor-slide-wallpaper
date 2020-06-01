@@ -2,7 +2,7 @@
 // @copyright: T.C.V.
 // @license: MIT
 // @birth: created by Infinite Synthesis on 2020 May 25
-// @version: V0.0.2
+// @version: V0.1.0
 
 #include <io.h>
 #include <shobjidl.h>
@@ -53,7 +53,7 @@ const char* GBK_LOCALE_NAME = ".936";
 std::wstring_convert<std::codecvt_byname<wchar_t, char, mbstate_t>> Conver_GBK(
     new std::codecvt_byname<wchar_t, char, mbstate_t>(GBK_LOCALE_NAME));
 
-void CALLBACK _TimerProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime) {
+void TimeProc() {
   UINT monitor_count = 0;
   std::string fullPath = "";
   LPWSTR monitorID = (LPWSTR)L"";
@@ -90,9 +90,14 @@ int _cdecl main(int argc, LPCWSTR argv[]) {
   }
   ReleaseOnExit releaseDesktopWallpaper(pDesktopWallpaper);
 
-  int iId = SetTimer(NULL, 0, TIME_INTERVAL, _TimerProc);
+  int iId = SetTimer(NULL, 0, TIME_INTERVAL, NULL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0)) {
+    if (msg.message == WM_TIMER) {
+      TimeProc();
+    }
+
+    TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
   KillTimer(NULL, iId);

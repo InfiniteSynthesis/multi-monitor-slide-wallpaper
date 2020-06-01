@@ -5,9 +5,10 @@ The code is for setting separate slide-like wallpaper for multi monitors in Wind
 ## How to use
 
 1. replace the YOUR_GALLERY_FOLDERS_HERE macro with your own gallery folder paths.
-2. Build 2 files, respectively, to get 2 exe.(e.g. Visual Studio)
-3. Create a shortcut for the `slidewallpaper` exe and paste it to the auto-startup folder.(`Win+R` to open `shell:startup`)
-4. `Win+R` to open `regedit`. Add Key `Next Wallpaper` under path `HKEY_CLASSES_ROOT\Directory\Background\shell`. Add sub-key `command` and set value to the path of `menunextwallpaper`.
+2. For `slidewallpaper` project, set `Configurature Properties -> General -> TargetName` to `MultiMonitorSlideWallpaper`
+3. Build 2 files, respectively, to get 2 exe file.
+4. Create a shortcut for the `MultiMonitorSlideWallpaper.exe` and paste it to the auto-startup folder.(`Win+R` to open `shell:startup`)
+5. `Win+R` to open `regedit`. Add Key `Next Wallpaper` under path `HKEY_CLASSES_ROOT\Directory\Background\shell`. Add sub-key `command` and set value to the path of `menunextwallpaper`.
 
 ## FAQ
 
