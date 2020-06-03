@@ -1,14 +1,21 @@
-The code is for setting separate slide-like wallpaper for multi monitors in Windows(8+). Item `Next Wallpaper` is added to desktop menu.
-
-可替换Windows下的多显示屏墙纸，实现在不同的显示器上播放不同的幻灯片背景的效果。同时在桌面菜单可右击更换下一张背景。
+This project supports multi-monitor wallpaper display on Windows. It can replace the wallpaper of each monitor from different folders for a specific interval. In addition, the python script can help automatically scale up the wallpaper images to fit the monitor resolution(e.g. 4K/2K/1440p) based on waifu2x-caffe.
 
 ## How to use
 
+### SlideWallpaper
+
 1. replace the YOUR_GALLERY_FOLDERS_HERE macro with your own gallery folder paths.
-2. For `slidewallpaper` project, set `Configurature Properties -> General -> TargetName` to `MultiMonitorSlideWallpaper`
-3. Build 2 files, respectively, to get 2 exe file.
-4. Create a shortcut for the `MultiMonitorSlideWallpaper.exe` and paste it to the auto-startup folder.(`Win+R` to open `shell:startup`)
-5. `Win+R` to open `regedit`. Add Key `Next Wallpaper` under path `HKEY_CLASSES_ROOT\Directory\Background\shell`. Add sub-key `command` and set value to the path of `menunextwallpaper`.
+2. Set `Configurature Properties -> General -> TargetName` to `MultiMonitorSlideWallpaper`
+3. Build it, and get the exe file `MultiMonitorSlideWallpaper.exe`.
+4. Create a shortcut for `MultiMonitorSlideWallpaper.exe` and paste it to the system auto-startup folder.(`Win+R` to open `shell:startup`)
+
+### MenuNextWallpaper
+1. Build it, and get the exe file.
+2. `Win+R` to open `regedit`. Add Key `Next Wallpaper` under path `HKEY_CLASSES_ROOT\Directory\Background\shell`. Add sub-key `command` and set value to the path of `menunextwallpaper.exe`.
+
+### BackgroundScaleupWaifu.py
+
+- Use `--help` to view the instructions.
 
 ## FAQ
 
