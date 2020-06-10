@@ -10,7 +10,7 @@ import sys, argparse
 from PIL import Image
 import subprocess
 
-MONITOR_SIZE = {'4K' : [3840, 2160], '1440p': [2560, 1440], '2K' : [1920, 1080]}
+MONITOR_SIZE = {'4K' : 3840, '1440p': 2560, '2K' : 1920}
 MONITOR_TYPE = '4K'
 FOLDER_PATH = 'E:/vertical pixiv/'
 WAIFU2X_PATH = 'C:/Program Files (x86)/waifu2x-caffe/waifu2x-caffe-cui.exe'
@@ -46,9 +46,9 @@ def process_image(file_path):
     img = Image.open(file_path)
     imgWidth, imgHeight = img.size
     img.close()
-    idealWidth, idealHeight = MONITOR_SIZE[MONITOR_TYPE]
+    idealLength = MONITOR_SIZE[MONITOR_TYPE]
     PROCESSED_COUNT += 1
-    scale = (idealWidth / imgWidth) if (imgWidth > imgHeight) else (idealHeight / imgHeight)
+    scale = (idealLength / imgWidth) if (imgWidth > imgHeight) else (idealLength / imgHeight)
     if (scale <= 1):
         SUITABLE_COUNT += 1
         PROCESSED_COUNT -= 1
